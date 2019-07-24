@@ -232,6 +232,7 @@ if [ -d /etc/opendkim/keys ] && [ ! -z "$(find /etc/opendkim/keys -type f ! -nam
 	done
 	IFS="$oldIFS"
 	echo "" >> /etc/opendkim/TrustedHosts
+	
 
 	if [ ! -z "$ALLOWED_SENDER_DOMAINS" ]; then
 		for i in $ALLOWED_SENDER_DOMAINS; do
@@ -240,8 +241,13 @@ if [ -d /etc/opendkim/keys ] && [ ! -z "$(find /etc/opendkim/keys -type f ! -nam
 				echo -e "        ...for domain ${emphasis}$i${reset}"
 				echo "*.$i" >> /etc/opendkim/TrustedHosts
 				echo "$i" >> /etc/opendkim/TrustedHosts
-				echo "mail._domainkey.$i $i:mail:$private_key" >> /etc/opendkim/KeyTable
-				echo "*@$i mail._domainkey.$i" >> /etc/opendkim/SigningTable
+				if [ -z "$DKIM_SELECTOR" ]; then
+					echo "$DKIM_SELECTOR._domainkey.$i $i:mail:$private_key" >> /etc/opendkim/KeyTable
+					echo "*@$i $DKIM_SELECTOR._domainkey.$i" >> /etc/opendkim/SigningTable
+				else
+					echo "mail._domainkey.$i $i:mail:$private_key" >> /etc/opendkim/KeyTable
+					echo "*@$i mail._domainkey.$i" >> /etc/opendkim/SigningTable
+				fi
 			else
 				echo "  ...$warn skipping for domain ${emphasis}$i${reset}. File $private_key not found!"
 			fi
